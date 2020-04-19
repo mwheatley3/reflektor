@@ -57,10 +57,7 @@ func (fn *Func) Call(args ...string) *Result {
 	)
 
 	for i := range args {
-		var (
-			err error
-			typ reflect.Type
-		)
+		var typ reflect.Type
 
 		if variadic && i >= mt.NumIn() {
 			typ = mt.In(mt.NumIn() - 1)
@@ -68,8 +65,8 @@ func (fn *Func) Call(args ...string) *Result {
 			typ = mt.In(i)
 		}
 
-		in[i], err = ParseIn(args[i], typ)
-		if err != nil {
+		in[i] = reflect.New(typ).Elem()
+		if err := ParseIn(args[i], in[i]); err != nil {
 			return nil
 		}
 	}
