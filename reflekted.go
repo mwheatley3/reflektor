@@ -19,7 +19,7 @@ func (r *Reflekted) Method(method string) (*Func, error) {
 		return nil, ErrInvalidMethod
 	}
 
-	return &Func{m, method}, nil
+	return newFunc(m, method), nil
 }
 
 func (r *Reflekted) Methods() []*Func {
@@ -37,15 +37,27 @@ func (r *Reflekted) Methods() []*Func {
 			continue
 		}
 
-		methods = append(methods, &Func{r.target.Method(i), m.Name})
+		f := newFunc(r.target.Method(i), m.Name)
+		methods = append(methods, f)
 	}
 
 	return methods
 }
 
+func newFunc(fn reflect.Value, name string) *Func {
+	f := &Func{
+		fn:   fn,
+		Name: name,
+	}
+	f.args()
+	return f
+}
+
 type Func struct {
-	fn   reflect.Value
-	Name string
+	fn       reflect.Value
+	Name     string
+	InTypes  []string
+	OutTypes []string
 }
 
 func (fn *Func) Call(args ...string) *Result {
@@ -81,6 +93,26 @@ func (fn *Func) Call(args ...string) *Result {
 	}
 
 	return &Result{out}
+}
+
+func (fn *Func) args() {
+	var (
+		mt     = fn.fn.Type()
+		numIn  = mt.NumIn()
+		numOut = mt.NumOut()
+	)
+
+	for i := 0; i < numIn; i++ {
+		inValue := mt.In(i)
+		k := inValue.Kind()
+		fn.InTypes = append(fn.InTypes, k.String())
+	}
+
+	for i := 0; i < numOut; i++ {
+		outValue := mt.Out(i)
+		k := outValue.Kind()
+		fn.OutTypes = append(fn.OutTypes, k.String())
+	}
 }
 
 type Result struct {
