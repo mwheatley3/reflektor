@@ -10,7 +10,7 @@ var (
 )
 
 func Reflekt(obj interface{}) (*Reflekted, error) {
-	rv := unwrap(reflect.ValueOf(obj))
+	rv := reflect.ValueOf(obj)
 	if !canReflekt(rv) {
 		return nil, ErrInvalidTarget
 	}
@@ -22,6 +22,8 @@ func canReflekt(v reflect.Value) bool {
 	switch v.Kind() {
 	case reflect.Struct, reflect.Interface:
 		return true
+	case reflect.Ptr:
+		return canReflekt(unwrap(v))
 	default:
 		return false
 	}
@@ -31,6 +33,5 @@ func unwrap(v reflect.Value) reflect.Value {
 	for v.Kind() == reflect.Ptr {
 		v = v.Elem()
 	}
-
 	return v
 }
