@@ -75,12 +75,16 @@ func cmdCall(obj interface{}, args []string) error {
 	args = args[1:]
 	res := m.Call(args...)
 
-	// todo - do something with this
-	for i := 0; i < res.Len(); i++ {
-		fmt.Fprintf(os.Stdout, "%v\n", res.Value(i))
+	p := JSONPrinter{
+		Indent: "  ",
 	}
+	print(p, res)
 
 	return nil
+}
+
+func print(p Printer, r *Result) error {
+	return p.Print(r)
 }
 
 func cmdUsage() {

@@ -1,11 +1,12 @@
 package reflektor
 
 import (
-	"fmt"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
-type rv struct {
+type pExample struct {
 	Field1 string
 	Field2 string
 }
@@ -16,30 +17,39 @@ type Stuff struct {
 	C string
 }
 
-func (e *rv) Method1() Stuff { return Stuff{"a", "b", "c"}}
-//func (e *rv) Method2() stuff {}
-//func (e *rv) Method3() stuff {}
+func (e *pExample) Method1() Stuff { return Stuff{"a", "b", "c"}}
+func (e *pExample) Method2() string { return "HEY"}
 
 var printTests = []struct {
 	name    string
 	target  	interface{}
+	printer Printer
+	method string
 	expected string
 }{
 	{
-		name:    "empty struct",
-		target: &rv{},
-		expected: ``,
+		name:    "print struct",
+		target: &pExample{},
+		printer: JSONPrinter{
+			Prefix: "",
+			Indent: "  ",
+		},
+		method: "Method1",
+		expected: `{
+  "A": "a",
+  "B": "b",
+  "C": "c"
+}`},
+		{
+			name:    "print string",
+			target: &pExample{},
+			printer: JSONPrinter{
+				Prefix: "",
+				Indent: "  ",
+			},
+			method: "Method2",
+			expected: `"HEY"`,
 	},
-	//{
-	//	name:    "ptr to struct",
-	//	target:  &example{},
-	//	expected: []string{"Method1", "Method2", "Method3", "ValueMethod1"},
-	//},
-	//{
-	//	name:    "struct",
-	//	target:  example{},
-	//	expected: []string{"ValueMethod1"},
-	//},
 }
 
 func TestPrinter(t *testing.T) {
@@ -50,19 +60,34 @@ func TestPrinter(t *testing.T) {
 				t.Fatalf("error calling Reflekt: %s", err)
 			}
 
-			m, err := r.Method("Method1")
+			m, err := r.Method(test.method)
 			if err != nil {
 				t.Fatalf("error getting method: %s", err)
 			}
 
-			result := m.Call()
-			p := JSONPrinter{}
-			fmt.Printf("\n\nrv%#+v\n\n", result.value[0])
-			p.Print(result)
+			rescueStdout := os.Stdout
+			rd, w, err := os.Pipe()
+			if err != nil {
+				t.Fatalf("error creating pipe: %s", err)
+			}
+			os.Stdout = w
 
-			//if !reflect.DeepEqual(test.methods, ms) {
-			//	t.Fatalf("expected methods %s but found %s", test.methods, ms)
-			//}
+			result := m.Call()
+			err = test.printer.Print(result)
+			if err != nil {
+				t.Fatalf("error printing: %s", err)
+			}
+
+			w.Close()
+			out, err := ioutil.ReadAll(rd)
+			if err != nil {
+				t.Fatalf("error reading: %s", err)
+			}
+			os.Stdout = rescueStdout
+
+			if string(out) != test.expected {
+				t.Fatalf("Sorry!: %s", err)
+			}
 		})
 	}
 }

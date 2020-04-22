@@ -102,6 +102,7 @@ func (fn *Func) args() {
 	for i := 0; i < numIn; i++ {
 		inValue := mt.In(i)
 		k := inValue.Kind()
+		// TODO variadic
 		fn.InTypes = append(fn.InTypes, k.String())
 	}
 
