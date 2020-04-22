@@ -116,8 +116,12 @@ type Result struct {
 	value []reflect.Value
 }
 
+func (r *Result) Len() int {
+	return len(r.value)
+}
+
 func (r *Result) Value(i int) interface{} {
-	return nil
+	return r.value[i].Interface()
 }
 
 func (r *Result) HasError() (error, bool) {
