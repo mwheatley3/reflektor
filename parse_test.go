@@ -36,6 +36,9 @@ var parseTests = []struct {
 	{name: "float64", str: []string{"100.01"}, expected: float64(100.01)},
 	{name: "channel", str: []string{"100.01"}, err: ErrUnrecognizedParam, expected: make(chan bool)},
 	{name: "func", str: []string{"100.01"}, err: ErrUnrecognizedParam, expected: func() {}},
+	{name: "slice - int", str: []string{"[1,2]"},  expected: []int{1,2}},
+	{name: "slice - string", str: []string{"[abc,hello]"},  expected: []string{"abc","hello"}},
+	{name: "slice - float", str: []string{"[1.1,3.4]"},  expected: []float64{1.1,3.4}},
 }
 
 func TestParse(t *testing.T) {

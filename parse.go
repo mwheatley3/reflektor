@@ -5,6 +5,7 @@ import (
 	"math/bits"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 var (
@@ -75,6 +76,10 @@ func ParseIn(arg string, dest reflect.Value) error {
 		if err := parseFloat(arg, 64, dest); err != nil {
 			return err
 		}
+	case reflect.Slice:
+		if err := parseSlice(arg, dest); err != nil {
+			return err
+		}
 	default:
 		return ErrUnrecognizedParam
 	}
@@ -109,5 +114,20 @@ func parseFloat(arg string, size int, dest reflect.Value) error {
 	}
 
 	dest.SetFloat(v)
+	return nil
+}
+
+func parseSlice(arg string, dest reflect.Value) error {
+	newSlice := strings.Split(arg[1:len(arg)-1], ",")
+	slice := reflect.MakeSlice(dest.Type(), len(newSlice), len(newSlice))
+	for i := 0; i < len(newSlice); i++ {
+		v := slice.Index(i)
+		err := ParseIn(newSlice[i], v)
+		if err != nil {
+			return err
+		}
+	}
+
+	dest.Set(slice)
 	return nil
 }
